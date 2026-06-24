@@ -1,4 +1,6 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
+from datetime import time
 
 
 @dataclass
@@ -12,11 +14,12 @@ class Task:
 @dataclass
 class ScheduledTask:
     task: Task
-    start_time: str  # "HH:MM"
+    start_time: time
 
 
 @dataclass
 class DailyPlan:
+    time_budget: int  # total minutes available for the day
     scheduled_tasks: list[ScheduledTask] = field(default_factory=list)
 
     def generate(self, tasks: list[Task]) -> None:
@@ -38,13 +41,12 @@ class Pet:
 @dataclass
 class Owner:
     name: str
+    time_available_minutes: int
     pets: list[Pet] = field(default_factory=list)
+    daily_plan: DailyPlan | None = None
 
     def add_pet(self, pet: Pet) -> None:
         pass
 
     def remove_pet(self, pet: Pet) -> None:
-        pass
-
-    def generate_daily_plan(self, pet: Pet) -> DailyPlan:
         pass

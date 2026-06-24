@@ -11,12 +11,16 @@ User needs to be able to:
 **a. Initial design**
 
 - Briefly describe your initial UML design.
+There are 5 classes each with methods and attributes.
 - What classes did you include, and what responsibilities did you assign to each?
+The UML design includes classes: pet, owner, task, scheduled_task, daily_plan. Owners have pets, and pets have tasks, a scheduled task is just a task with a start time, and the daily_plan lists out the scheduled tasks. Owners can add and remove pets, pets can add/remove tasks.
 
 **b. Design changes**
 
 - Did your design change during implementation?
+Yes.
 - If yes, describe at least one change and why you made it.
+Yes. I made start times a datetime object instead of a string as they are easier to compare directly. 
 
 ---
 
