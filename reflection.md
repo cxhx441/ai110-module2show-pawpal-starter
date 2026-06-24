@@ -2,6 +2,12 @@
 
 ## 1. System Design
 
+User needs to be able to:
+- add an owner + pet to the system
+- add / edit tasks with priority ranking
+- generate and display a plan for tasks
+
+
 **a. Initial design**
 
 - Briefly describe your initial UML design.
