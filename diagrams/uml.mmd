@@ -1,10 +1,12 @@
 classDiagram
     class Owner {
         +str name
+        +int time_available_minutes
         +list~Pet~ pets
-        +generate_daily_plan()
+        +Scheduler scheduler
         +add_pet()
         +remove_pet()
+        +get_schedule()
     }
 
     class Pet {
@@ -19,20 +21,31 @@ classDiagram
         +str description
         +int priority
         +int duration
+        +Frequency frequency
+        +bool completed
+    }
+
+    class Frequency {
+        <<enumeration>>
+        DAILY
+        WEEKLY
+        AS_NEEDED
     }
 
     class ScheduledTask {
         +Task task
-        +str start_time
+        +time start_time
     }
 
-    class DailyPlan {
-        +list~ScheduledTask~ scheduled_tasks
+    class Scheduler {
+        +int time_budget
+        +list~ScheduledTask~ schedule
         +generate()
     }
 
     Owner "1" --> "0..*" Pet : owns
     Pet "1" --> "0..*" Task : has
-    Owner ..> DailyPlan : generates
-    DailyPlan "1" --> "0..*" ScheduledTask : contains
+    Owner --> Scheduler : uses
+    Scheduler "1" --> "0..*" ScheduledTask : contains
     ScheduledTask --> Task : wraps
+    Task --> Frequency : uses
