@@ -62,16 +62,44 @@ Today's Schedule for Mochi:
 
 ```bash
 # Run the full test suite:
-pytest
+python -m pytest tests/
 
 # Run with coverage:
 pytest --cov
 ```
 
-Sample test output:
+The suite covers four areas:
+1. **sorting** (generated schedule is chronological;  higher-priority tasks get earlier slots),
+2. **recurrence** (daily/weekly tasks spawn a follow-up on completion; AS_NEEDED tasks do not),
+3. **conflict detection** (overlapping windows are flagged; back-to-back tasks are not), and
+4. **time budget** (over-budget and already-completed tasks are excluded from the schedule).
 
+based on the test results below, I have a 5/5 confidence level in system reliability. 
+
+Sample test output:
 ```
-# Paste your pytest output here
+============================= test session starts ==============================
+platform darwin -- Python 3.14.2, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/char/Documents/git_repos/ai110-module2show-pawpal-starter
+collected 15 items
+
+tests/test_pawpal.py::test_mark_complete_changes_status PASSED           [  6%]
+tests/test_pawpal.py::test_add_task_increases_count PASSED               [ 13%]
+tests/test_pawpal.py::TestSortingCorrectness::test_generated_schedule_is_chronological PASSED [ 20%]
+tests/test_pawpal.py::TestSortingCorrectness::test_higher_priority_task_gets_earlier_slot PASSED [ 26%]
+tests/test_pawpal.py::TestSortingCorrectness::test_generate_with_no_tasks_returns_empty_schedule PASSED [ 33%]
+tests/test_pawpal.py::TestRecurrenceLogic::test_daily_task_creates_occurrence_for_next_day PASSED [ 40%]
+tests/test_pawpal.py::TestRecurrenceLogic::test_weekly_task_creates_occurrence_for_next_week PASSED [ 46%]
+tests/test_pawpal.py::TestRecurrenceLogic::test_as_needed_task_does_not_recur PASSED [ 53%]
+tests/test_pawpal.py::TestRecurrenceLogic::test_new_recurring_task_starts_as_not_completed PASSED [ 60%]
+tests/test_pawpal.py::TestConflictDetection::test_same_start_time_is_flagged PASSED [ 66%]
+tests/test_pawpal.py::TestConflictDetection::test_overlapping_windows_produce_warning PASSED [ 73%]
+tests/test_pawpal.py::TestConflictDetection::test_back_to_back_tasks_are_not_a_conflict PASSED [ 80%]
+tests/test_pawpal.py::TestConflictDetection::test_empty_schedule_has_no_conflicts PASSED [ 86%]
+tests/test_pawpal.py::TestTimeBudget::test_task_exceeding_remaining_budget_is_skipped PASSED [ 93%]
+tests/test_pawpal.py::TestTimeBudget::test_completed_tasks_are_excluded_from_schedule PASSED [100%]
+
+============================== 15 passed in 0.02s ==============================
 ```
 
 ## 📐 Smarter Scheduling
