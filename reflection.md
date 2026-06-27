@@ -20,7 +20,7 @@ The UML design includes classes: pet, owner, task, scheduled_task, daily_plan. O
 - Did your design change during implementation?
 Yes.
 - If yes, describe at least one change and why you made it.
-Yes. I made start times a datetime object instead of a string as they are easier to compare directly. 
+Yes. I made start times a datetime object instead of a string as they are easier to compare directly.
 
 ---
 
@@ -30,11 +30,13 @@ Yes. I made start times a datetime object instead of a string as they are easier
 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
 - How did you decide which constraints mattered most?
+The scheduler considers the owner's total time budget and each task's priority and duration. It was a clear decision that priority mattered most because some pet tasks are non-negotiable (like feeding or medication) and the owner needs those handled first before anything optional gets scheduled.
 
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
+The scheduler fills tasks in priority order and skips any task that doesn't fit, even if a shorter one could. This can leave unused time in the budget. This is important because for a pet owner, priority order matters more than packing in as many tasks as possible. e.g. medicine is more important than groooming, even if it takes longer and pushes out lower priority taskes.
 
 ---
 

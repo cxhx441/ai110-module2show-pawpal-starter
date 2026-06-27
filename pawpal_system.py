@@ -1,6 +1,6 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
-from datetime import datetime, time, timedelta
+from dataclasses import dataclass, field, replace
+from datetime import date, datetime, time, timedelta
 from enum import Enum
 
 
@@ -16,12 +16,18 @@ class Task:
     description: str
     priority: int
     duration: int  # minutes
+    pet: Pet
     frequency: Frequency = Frequency.DAILY
     completed: bool = False
+    due_date: date | None = field(default=None)
 
     def mark_complete(self) -> None:
-        """Mark this task as completed."""
+        """Mark complete and queue the next occurrence for recurring tasks."""
         self.completed = True
+        if self.frequency is Frequency.AS_NEEDED:
+            return
+        delta = timedelta(days=1 if self.frequency is Frequency.DAILY else 7)
+        self.pet.add_task(replace(self, completed=False, due_date=date.today() + delta))
 
 
 @dataclass(frozen=True)
@@ -35,11 +41,54 @@ class Scheduler:
     time_budget: int  # total minutes available for the day
     schedule: list[ScheduledTask] = field(default_factory=list)
 
+    def filter_tasks(
+        self,
+        completed: bool | None = None,
+        pet: Pet | None = None,
+    ) -> list[ScheduledTask]:
+        """Return scheduled tasks matching the given filters.
+
+        Pass completed=True/False to filter by completion status.
+        Pass a Pet object to filter to only that pet's tasks.
+        Omitting a parameter leaves that filter inactive.
+        """
+        results = self.schedule
+        if completed is not None:
+            results = [st for st in results if st.task.completed == completed]
+        if pet is not None:
+            results = [st for st in results if st.task.pet is pet]
+        return results
+
+    def detect_conflicts(self) -> list[str]:
+        """Return a warning string for every pair of tasks whose time windows overlap."""
+        def end_time(st: ScheduledTask) -> time:
+            anchor = datetime(2000, 1, 1, st.start_time.hour, st.start_time.minute)
+            return (anchor + timedelta(minutes=st.task.duration)).time()
+
+        timed = [(st, end_time(st)) for st in sorted(self.schedule, key=lambda st: st.start_time)]
+        warnings = []
+        for i, (a, end_a) in enumerate(timed):
+            for b, end_b in timed[i + 1:]:
+                if b.start_time >= end_a:
+                    break  # sorted, so nothing further can overlap a
+                warnings.append(
+                    f"WARNING: [{a.task.pet.name}] {a.task.title} "
+                    f"({a.start_time.strftime('%H:%M')}–{end_a.strftime('%H:%M')}) "
+                    f"overlaps [{b.task.pet.name}] {b.task.title} "
+                    f"({b.start_time.strftime('%H:%M')}–{end_b.strftime('%H:%M')})"
+                )
+        return warnings
+
+    def sort_by_duration(self) -> None:
+        """Re-order the current schedule from shortest to longest task duration."""
+        self.schedule.sort(key=lambda st: st.task.duration)
+
     def generate(self, tasks: list[Task], start_time: time = time(8, 0)) -> None:
         """Sort tasks by priority and assign start times within the time budget."""
         self.schedule.clear()
+        today = date.today()
         pending = sorted(
-            [t for t in tasks if not t.completed],
+            [t for t in tasks if not t.completed and (t.due_date is None or t.due_date <= today)],
             key=lambda t: t.priority,
             reverse=True,
         )
