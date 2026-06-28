@@ -40,6 +40,7 @@ class ScheduledTask:
 class Scheduler:
     time_budget: int  # total minutes available for the day
     schedule: list[ScheduledTask] = field(default_factory=list)
+    skipped: list[Task] = field(default_factory=list)
 
     def filter_tasks(
         self,
@@ -86,6 +87,7 @@ class Scheduler:
     def generate(self, tasks: list[Task], start_time: time = time(8, 0)) -> None:
         """Sort tasks by priority and assign start times within the time budget."""
         self.schedule.clear()
+        self.skipped.clear()
         today = date.today()
         pending = sorted(
             [t for t in tasks if not t.completed and (t.due_date is None or t.due_date <= today)],
@@ -96,6 +98,7 @@ class Scheduler:
         minutes_used = 0
         for task in pending:
             if minutes_used + task.duration > self.time_budget:
+                self.skipped.append(task)
                 continue
             slot = anchor + timedelta(minutes=minutes_used)
             self.schedule.append(ScheduledTask(task=task, start_time=slot.time()))
@@ -131,8 +134,8 @@ class Owner:
         """Remove a pet from this owner's pet list."""
         self.pets.remove(pet)
 
-    def get_schedule(self, pet: Pet) -> list[ScheduledTask]:
+    def get_schedule(self, pet: Pet, start_time: time = time(8, 0)) -> list[ScheduledTask]:
         """Generate and return a daily schedule for the given pet."""
         self.scheduler = Scheduler(time_budget=self.time_available_minutes)
-        self.scheduler.generate(pet.tasks)
+        self.scheduler.generate(pet.tasks, start_time=start_time)
         return self.scheduler.schedule

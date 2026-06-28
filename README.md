@@ -22,6 +22,20 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## Features
+
+- **Priority-based scheduling** — `Scheduler.generate()` sorts pending tasks from highest to lowest priority before assigning time slots. Tasks that would exceed the remaining time budget are skipped and collected in `scheduler.skipped` rather than dropped silently.
+
+- **Due-date filtering** — `generate()` excludes tasks whose `due_date` is in the future, so only tasks that are due today or overdue appear in the schedule.
+
+- **Daily/weekly recurrence** — `Task.mark_complete()` automatically creates a follow-up copy of the task with `due_date` set to tomorrow (DAILY) or +7 days (WEEKLY) and adds it back to the pet's task list. `AS_NEEDED` tasks complete without spawning a recurrence.
+
+- **Conflict detection** — `Scheduler.detect_conflicts()` sorts tasks by start time, then does a forward scan with an early-exit break to find overlapping time windows. Returns a list of human-readable warning strings without modifying the schedule.
+
+- **Sort by duration** — `Scheduler.sort_by_duration()` re-orders the current schedule in-place from shortest to longest task duration (useful for batching quick tasks first).
+
+- **Filter by pet or completion status** — `Scheduler.filter_tasks(completed, pet)` returns a filtered slice of the schedule. Arguments are optional and composable — pass one, both, or neither.
+
 ## Getting started
 
 ### Setup
@@ -74,7 +88,7 @@ The suite covers four areas:
 3. **conflict detection** (overlapping windows are flagged; back-to-back tasks are not), and
 4. **time budget** (over-budget and already-completed tasks are excluded from the schedule).
 
-based on the test results below, I have a 5/5 confidence level in system reliability. 
+based on the test results below, I have a 5/5 confidence level in system reliability.
 
 Sample test output:
 ```
@@ -115,11 +129,56 @@ tests/test_pawpal.py::TestTimeBudget::test_completed_tasks_are_excluded_from_sch
 ## 📸 Demo Walkthrough
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
+1. Add one or several Owner and Pets.
+2. add one or several tasks for the specific owner+pet combination from the dropdown menu, filling in the appropriate parameters
+3. Select either "all pets" or a specific owner + pet combination from the dropdown in the Build Schedule section
+4. click Generate schedule button.
+5. the generated schedule may be sorted by priority (default) or duration. Just select the radio button to change.
+6. If a schedule has tasks where the sum of their duration exceeds the available time, a warning is shown to the user.
+7. If a schedule is generated for all the pets, it's possible to have overlapping tasks scheduled. A warning will be shown to the user.
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
 
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+# Sample CLI Output from Running main.py
+```
+=== Combined Schedule — sorted by priority ===
+  08:00  [Biscuit] Morning Walk (30 min) [pending]
+  08:30  [Mochi] Feeding (5 min) [pending]
+  08:35  [Biscuit] Feeding (10 min) [pending]
+  08:45  [Mochi] Litter Box (10 min) [pending]
+  08:55  [Biscuit] Grooming (20 min) [pending]
+  09:15  [Mochi] Playing (15 min) [pending]
+
+=== After sort_by_duration() — shortest first ===
+  08:30  [Mochi] Feeding (5 min) [pending]
+  08:35  [Biscuit] Feeding (10 min) [pending]
+  08:45  [Mochi] Litter Box (10 min) [pending]
+  09:15  [Mochi] Playing (15 min) [pending]
+  08:55  [Biscuit] Grooming (20 min) [pending]
+  08:00  [Biscuit] Morning Walk (30 min) [pending]
+
+=== filter_tasks(pet=dog) ===
+  08:35  [Biscuit] Feeding (10 min) [pending]
+  08:55  [Biscuit] Grooming (20 min) [pending]
+  08:00  [Biscuit] Morning Walk (30 min) [pending]
+
+=== filter_tasks(pet=cat) ===
+  08:30  [Mochi] Feeding (5 min) [pending]
+  08:45  [Mochi] Litter Box (10 min) [pending]
+  09:15  [Mochi] Playing (15 min) [pending]
+
+=== filter_tasks(completed=False) — still pending ===
+  08:30  [Mochi] Feeding (5 min) [pending]
+  08:35  [Biscuit] Feeding (10 min) [pending]
+  08:45  [Mochi] Litter Box (10 min) [pending]
+  09:15  [Mochi] Playing (15 min) [pending]
+  08:55  [Biscuit] Grooming (20 min) [pending]
+
+=== filter_tasks(completed=True) — done ===
+  08:00  [Biscuit] Morning Walk (30 min) [done]
+
+=== Conflict detection demo ===
+  08:00  [Biscuit] Bath (45 min) [pending]
+  08:20  [Mochi] Vet Check (30 min) [pending]
+
+  WARNING: [Biscuit] Bath (08:00–08:45) overlaps [Mochi] Vet Check (08:20–08:50)
+```
